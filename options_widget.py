@@ -12,7 +12,7 @@ class OptionsWidget(QWidget):
 
         self.options_layout = QVBoxLayout()
 
-        self.options_layout.addWidget(QLabel("Sizes (only squares"))
+        self.options_layout.addWidget(QLabel("Sizes (only squares)"))
         self.size_slider = QSlider()
         self.size_slider.setOrientation(Qt.Horizontal)
         self.size_slider.setMinimum(4)
@@ -42,6 +42,7 @@ class OptionsWidget(QWidget):
         self.run_button = QPushButton("Run")
         self.run_once_button = QPushButton("Run one step")
         self.stop_button = QPushButton("Stop")
+        self.stop_button.setEnabled(False)
         controls_layout = QHBoxLayout()
         controls_layout.addWidget(self.run_button)
         controls_layout.addWidget(self.run_once_button)
@@ -60,10 +61,28 @@ class OptionsWidget(QWidget):
         self.show_choice.addItems(["Values", "Policy"])
         self.options_layout.addWidget(self.show_choice)
 
+        # agent
+        self.agent_group = QGroupBox("Agent(s)")
+        self._agent_layout = QVBoxLayout()
+        self._agent_layout.addWidget(QLabel("Controls"))
+        self.agent_run_button = QPushButton("Run")
+        self.agent_run_once_button = QPushButton("Run one step")
+        self.agent_stop_button = QPushButton("Stop")
+        self.agent_stop_button.setEnabled(False)
+        agent_controls_layout = QHBoxLayout()
+        agent_controls_layout.addWidget(self.agent_run_button)
+        agent_controls_layout.addWidget(self.agent_run_once_button)
+        agent_controls_layout.addWidget(self.agent_stop_button)
+        agent_control_frame = QFrame()
+        agent_control_frame.setLayout(agent_controls_layout)
+        self._agent_layout.addWidget(agent_control_frame)
+        self.agent_group.setLayout(self._agent_layout)
+
         # Layout
         self.options_group = QGroupBox("Options")
         self.options_group.setLayout(self.options_layout)
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.options_group)
+        main_layout.addWidget(self.agent_group)
         main_layout.addStretch(0)
         self.setLayout(main_layout)

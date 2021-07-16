@@ -1,3 +1,4 @@
+import math
 from time import sleep
 
 import numpy as np
@@ -59,7 +60,10 @@ class Algorithm(QObject):
             reward = 0
         else:
             new_index = self.new_indexes[n_action](x, y)
-            reward = -100 if self.cell_types[new_index] == 1 else -1
+            if self._kings_move:
+                reward = -100 if self.cell_types[new_index] == 1 else -1 if n_action % 2 == 0 else -math.sqrt(2)
+            else:
+                reward = -100 if self.cell_types[new_index] == 1 else -1
             next_state = self.states[new_index] if reward != -100 else self.states[x, y]
         return int(next_state), reward
 

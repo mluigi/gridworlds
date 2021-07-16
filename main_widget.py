@@ -23,6 +23,7 @@ class MainWidget(QWidget):
         self.options.run_once_button.pressed.connect(self.algo.step)
         self.options.run_button.pressed.connect(self.algo.run)
         self.options.run_button.pressed.connect(lambda: self.toggle_ui(False))
+        self.options.stop_button.pressed.connect(lambda: self.reset_algo)
         self.algo.finished.connect(lambda: self.toggle_ui(True))
         # self.options.stop_button.pressed.connect(self.reset_algo)
         self.reset_algo()
@@ -32,7 +33,7 @@ class MainWidget(QWidget):
         self.options.show_choice.currentIndexChanged.connect(self.change_what_to_show)
         grid_layout = QGridLayout()
         self.setLayout(grid_layout)
-        self.grid.reset_dp_signal.connect(self.reset_algo)
+        self.grid.changed.connect(self.reset_algo)
         grid_layout.addWidget(self.grid, 0, 0)
         grid_layout.addWidget(self.options, 0, 1)
 
@@ -81,7 +82,6 @@ class MainWidget(QWidget):
     def toggle_ui(self, enable):
         self.options.run_button.setEnabled(enable)
         self.options.run_once_button.setEnabled(enable)
-        self.options.stop_button.setEnabled(enable)
         self.options.show_choice.setEnabled(enable)
         self.options.algo_choice.setEnabled(enable)
         self.options.moves_choice.setEnabled(enable)

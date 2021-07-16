@@ -15,7 +15,7 @@ class GridWidget(QWidget):
         3: ('Blue', 'white'),  # Finish
         4: ('Yellow', 'black')  # Current Position
     }
-    reset_dp_signal = QtCore.pyqtSignal()
+    changed = QtCore.pyqtSignal()
 
     def __init__(self, size: (None, None)):
         super().__init__()
@@ -36,7 +36,7 @@ class GridWidget(QWidget):
         y = math.floor(y / (self.size().height() / self.sizes[1]))
         self.cell_types[y, x] = (self.cell_types[y, x] + 1) % 4
         self.update_cell(x, y)
-        self.reset_dp_signal.emit()
+        self.changed.emit()
 
     def get_cell(self, x, y):
         cell = QLabel()
