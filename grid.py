@@ -13,7 +13,8 @@ class GridWidget(QWidget):
         1: ('Black', 'white'),  # Obstacle
         2: ('Green', 'white'),  # Start
         3: ('Blue', 'white'),  # Finish
-        4: ('Yellow', 'black')  # Current Position
+        4: ('Red', 'white'),  # Multi agent test
+        5: ('Yellow', 'black')  # Current Position
     }
     changed = QtCore.pyqtSignal()
 
@@ -34,7 +35,7 @@ class GridWidget(QWidget):
         y = mouse_position.y()
         x = math.floor(x / (self.size().width() / self.sizes[0]))
         y = math.floor(y / (self.size().height() / self.sizes[1]))
-        self.cell_types[y, x] = (self.cell_types[y, x] + 1) % 4
+        self.cell_types[y, x] = (self.cell_types[y, x] + 1) % 5
         self.update_cell(x, y)
         self.changed.emit()
 

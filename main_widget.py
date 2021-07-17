@@ -1,7 +1,10 @@
 from PyQt5.QtCore import QThread
 from PyQt5.QtWidgets import QWidget, QGridLayout
 
-from algorithms import PolicyEvaluation, PolicyIteration, ValueIteration, Algorithm
+from algorithms.algorithm import Algorithm
+from algorithms.policy_evaluation import PolicyEvaluation
+from algorithms.policy_iteration import PolicyIteration
+from algorithms.value_iteration import ValueIteration
 from grid import GridWidget
 from options_widget import OptionsWidget
 
