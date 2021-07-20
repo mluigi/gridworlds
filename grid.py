@@ -6,13 +6,18 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QMouseEvent, QFont, QResizeEvent
 from PyQt5.QtWidgets import QWidget, QGridLayout, QLabel
 
+FREE_CELL = 0
+OBSTACLE = 1
+START = 2
+FINISH = 3
+
 
 class GridWidget(QWidget):
     COLORS = {
-        0: ('White', 'black'),
-        1: ('Black', 'white'),  # Obstacle
-        2: ('Green', 'white'),  # Start
-        3: ('Blue', 'white'),  # Finish
+        FREE_CELL: ('White', 'black'),
+        OBSTACLE: ('Black', 'white'),  # Obstacle
+        START: ('Green', 'white'),  # Start
+        FINISH: ('Blue', 'white'),  # Finish
         4: ('Red', 'white'),  # Multi agent test
         5: ('Yellow', 'black')  # Current Position
     }

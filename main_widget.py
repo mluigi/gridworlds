@@ -1,6 +1,7 @@
 from PyQt5.QtCore import QThread
 from PyQt5.QtWidgets import QWidget, QGridLayout
 
+from agent import Agent
 from algorithms.algorithm import Algorithm
 from algorithms.policy_evaluation import PolicyEvaluation
 from algorithms.policy_iteration import PolicyIteration
@@ -18,6 +19,11 @@ class MainWidget(QWidget):
         self.options = OptionsWidget()
 
         self.options.size_slider.valueChanged.connect(self.change_grid_size)
+
+        # Agent test
+        self.agent = Agent(self.grid.sizes, self.grid.cell_types, True)
+        self.agent.policy_signal.connect(self.grid.write_on_cells)
+        self.options.agent_run_button.pressed.connect(self.agent.find_policy)
 
         self._kings_moves = False
         self.algo_type = 0
@@ -58,6 +64,7 @@ class MainWidget(QWidget):
     def change_grid_size(self, new_size):
         self.grid.sizes = (new_size, new_size)
         self.grid.reset()
+        self.agent.sizes = (new_size, new_size)
         self.reset_algo()
 
     def reset_thread(self):
@@ -80,6 +87,7 @@ class MainWidget(QWidget):
         self.options.run_button.pressed.connect(self.algo.run)
         self.options.run_button.pressed.connect(lambda: self.toggle_ui(False))
         self.algo.finished.connect(lambda: self.toggle_ui(True))
+        self.agent.change_cell_types(self.grid.cell_types)
         self.thread.start()
 
     def toggle_ui(self, enable):
