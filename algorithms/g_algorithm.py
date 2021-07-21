@@ -100,4 +100,3 @@ class GAlgorithm(Algorithm):
                     it.iternext()
             self.fas[:, :, :, t] = self.fas[:, :, :, t] / np.sum(self.fas[:, :, :, t])
             self.fs[:, :, t] = np.sum(self.fas[:, :, :, t], 2)
-        print("shabado")

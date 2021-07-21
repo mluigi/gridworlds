@@ -20,6 +20,8 @@ class PlotWindow(QDialog):
         ver_lay.addWidget(self.slider)
         self.figure = Figure()
         self.ax: Axes = self.figure.add_subplot()
+        self.ax.matshow(self.g_algo.fs[:, :, 0])
+        self.ax.set_title(f"T=1")
         self.canvas = FigureCanvas(self.figure)
         self.toolbar = NavigationToolbar(self.canvas, self)
         ver_lay.addWidget(self.toolbar)
@@ -30,4 +32,5 @@ class PlotWindow(QDialog):
     def change_plot(self, i):
         self.ax.clear()
         self.ax.matshow(self.g_algo.fs[:, :, i])
+        self.ax.set_title(f"T={i + 1}")
         self.canvas.draw()
