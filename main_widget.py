@@ -3,11 +3,13 @@ from PyQt5.QtWidgets import QWidget, QGridLayout
 
 from agent import Agent
 from algorithms.algorithm import Algorithm
+from algorithms.g_algorithm import GAlgorithm
 from algorithms.policy_evaluation import PolicyEvaluation
 from algorithms.policy_iteration import PolicyIteration
 from algorithms.value_iteration import ValueIteration
 from grid import GridWidget
 from options_widget import OptionsWidget
+from plot_window import PlotWindow
 
 
 class MainWidget(QWidget):
@@ -32,9 +34,10 @@ class MainWidget(QWidget):
         self.options.run_once_button.pressed.connect(self.algo.step)
         self.options.run_button.pressed.connect(self.algo.run)
         self.options.run_button.pressed.connect(lambda: self.toggle_ui(False))
-        self.options.stop_button.pressed.connect(lambda: self.reset_algo)
         self.algo.finished.connect(lambda: self.toggle_ui(True))
-        # self.options.stop_button.pressed.connect(self.reset_algo)
+
+        self.galg = GAlgorithm(self.grid.sizes, self.grid.cell_types)
+        self.options.stop_button.pressed.connect(self.test_forward)
         self.reset_algo()
 
         self.options.moves_choice.currentIndexChanged.connect(self.change_moves_type)
@@ -87,6 +90,9 @@ class MainWidget(QWidget):
         self.options.run_button.pressed.connect(self.algo.run)
         self.options.run_button.pressed.connect(lambda: self.toggle_ui(False))
         self.algo.finished.connect(lambda: self.toggle_ui(True))
+        self.galg = GAlgorithm(self.grid.sizes, self.grid.cell_types)
+        self.options.stop_button.pressed.disconnect()
+        self.options.stop_button.pressed.connect(self.test_forward)
         self.agent.change_cell_types(self.grid.cell_types)
         self.thread.start()
 
@@ -98,3 +104,7 @@ class MainWidget(QWidget):
         self.options.moves_choice.setEnabled(enable)
         self.options.size_slider.setEnabled(enable)
         self.grid.setEnabled(enable)
+
+    def test_forward(self):
+        self.galg.forward()
+        g = PlotWindow(self.galg)

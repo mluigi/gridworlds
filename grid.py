@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import QWidget, QGridLayout, QLabel
 FREE_CELL = 0
 OBSTACLE = 1
 START = 2
-FINISH = 3
+GOAL = 3
 
 
 class GridWidget(QWidget):
@@ -17,7 +17,7 @@ class GridWidget(QWidget):
         FREE_CELL: ('White', 'black'),
         OBSTACLE: ('Black', 'white'),  # Obstacle
         START: ('Green', 'white'),  # Start
-        FINISH: ('Blue', 'white'),  # Finish
+        GOAL: ('Blue', 'white'),  # Finish
         4: ('Red', 'white'),  # Multi agent test
         5: ('Yellow', 'black')  # Current Position
     }

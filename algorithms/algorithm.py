@@ -4,7 +4,7 @@ import numpy as np
 from PyQt5 import QtCore
 from PyQt5.QtCore import QObject
 
-from grid import START, FREE_CELL, OBSTACLE, FINISH
+from grid import START, FREE_CELL, OBSTACLE, GOAL
 
 
 class Algorithm(QObject):
@@ -24,7 +24,7 @@ class Algorithm(QObject):
         self._n_states = 0
         while not it.finished:
             x, y = it.multi_index
-            is_finish_cell = self.cell_types[x, y] == FINISH
+            is_finish_cell = self.cell_types[x, y] == GOAL
             self._n_states += 0 if is_finish_cell else 1
             self.states[x, y] = 0 if is_finish_cell else self._n_states
             it.iternext()
@@ -32,7 +32,7 @@ class Algorithm(QObject):
         self.V = np.zeros(self._n_states)
 
         # actions
-        self.arrows = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'] if kings_move else ['↑', '→', '↓', '←']
+        self._arrows = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖', ''] if kings_move else ['↑', '→', '↓', '←']
         self.new_indexes = [
             lambda x, y: (np.clip(x - 1, 0, self._size[0] - 1), y),  # Up
             lambda x, y: (x, y) if self.is_out_of_bounds((x - 1, y + 1)) else (x - 1, y + 1),  # Up-Right
@@ -42,6 +42,7 @@ class Algorithm(QObject):
             lambda x, y: (x, y) if self.is_out_of_bounds((x + 1, y - 1)) else (x + 1, y - 1),  # Down-Left
             lambda x, y: (x, np.clip(y - 1, 0, self._size[0] - 1)),  # Left
             lambda x, y: (x, y) if self.is_out_of_bounds((x - 1, y - 1)) else (x - 1, y - 1),  # Up-Left
+            lambda x, y: (x, y),  # Still
         ] if kings_move else [
             lambda x, y: (np.clip(x - 1, 0, self._size[0] - 1), y),  # Up
             lambda x, y: (x, np.clip(y + 1, 0, self._size[0] - 1)),  # Right
@@ -53,7 +54,7 @@ class Algorithm(QObject):
         self.policy = np.ones((self._n_states, self._n_actions)) / self._n_actions
 
     def move(self, x, y, n_action):
-        if self.cell_types[x, y] == FINISH:
+        if self.cell_types[x, y] == GOAL:
             next_state = 0
             reward = 0
         elif self.cell_types[x, y] == OBSTACLE:
