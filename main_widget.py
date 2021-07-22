@@ -29,15 +29,12 @@ class MainWidget(QWidget):
 
         self._kings_moves = False
         self.algo_type = 0
-        self.algo_types = [PolicyEvaluation, PolicyIteration, ValueIteration]
+        self.algo_types = [PolicyEvaluation, PolicyIteration, ValueIteration, GAlgorithm]
         self.algo = Algorithm(self.grid.sizes, self.grid.cell_types, self._kings_moves)
         self.options.run_once_button.pressed.connect(self.algo.step)
         self.options.run_button.pressed.connect(self.algo.run)
         self.options.run_button.pressed.connect(lambda: self.toggle_ui(False))
         self.algo.finished.connect(lambda: self.toggle_ui(True))
-
-        self.galg = GAlgorithm(self.grid.sizes, self.grid.cell_types)
-        self.options.stop_button.pressed.connect(self.test_forward)
         self.reset_algo()
 
         self.options.moves_choice.currentIndexChanged.connect(self.change_moves_type)
@@ -84,15 +81,18 @@ class MainWidget(QWidget):
         self.algo.moveToThread(self.thread)
         self.algo.step_signal.connect(self.options.step_text.setText)
         self.algo.write_signal.connect(self.grid.write_on_cells)
-        self.options.run_once_button.pressed.disconnect()
-        self.options.run_once_button.pressed.connect(self.algo.step)
+        if isinstance(self.algo, GAlgorithm):
+            self.options.run_once_button.setEnabled(False)
+            self.algo.finished.connect(self.plot)
+        else:
+            self.options.run_once_button.setEnabled(True)
+            self.options.run_once_button.pressed.disconnect()
+            self.options.run_once_button.pressed.connect(self.algo.step)
         self.options.run_button.pressed.disconnect()
         self.options.run_button.pressed.connect(self.algo.run)
         self.options.run_button.pressed.connect(lambda: self.toggle_ui(False))
         self.algo.finished.connect(lambda: self.toggle_ui(True))
-        self.galg = GAlgorithm(self.grid.sizes, self.grid.cell_types)
-        self.options.stop_button.pressed.disconnect()
-        self.options.stop_button.pressed.connect(self.test_forward)
+
         self.agent.change_cell_types(self.grid.cell_types)
         self.thread.start()
 
@@ -105,6 +105,22 @@ class MainWidget(QWidget):
         self.options.size_slider.setEnabled(enable)
         self.grid.setEnabled(enable)
 
-    def test_forward(self):
-        self.galg.forward()
-        g = PlotWindow(self.galg)
+    def plot(self):
+        thread1 = QThread(parent=self)
+        fs = PlotWindow("Forward", self.algo.fs, self.algo.T)
+        fs.moveToThread(thread1)
+        thread1.started.connect(lambda: fs.show())
+
+        thread2 = QThread(parent=self)
+        bs = PlotWindow("Backward", self.algo.bs, self.algo.T)
+        bs.moveToThread(thread2)
+        thread2.started.connect(lambda: bs.show())
+
+        thread3 = QThread(parent=self)
+        ps = PlotWindow("Posterior", self.algo.ps, self.algo.T)
+        ps.moveToThread(thread3)
+        thread3.started.connect(lambda: ps.show())
+
+        thread1.start()
+        thread2.start()
+        thread3.start()

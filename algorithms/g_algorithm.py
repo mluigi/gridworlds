@@ -1,3 +1,5 @@
+from threading import Thread
+
 import numpy as np
 
 from algorithms.algorithm import Algorithm
@@ -5,7 +7,7 @@ from grid import START, GOAL, OBSTACLE
 
 
 class GAlgorithm(Algorithm):
-    def __init__(self, size: (None, None), cell_types: np.ndarray, what_to_show=0):
+    def __init__(self, size: (None, None), cell_types: np.ndarray, kings_move=True, what_to_show=0):
         super().__init__(size, cell_types, True, what_to_show)
         self.L = 9
         self.T = 60
@@ -86,6 +88,8 @@ class GAlgorithm(Algorithm):
             self.fas[:, :, a, 0] = self.fs[:, :, 0] * self.fa[a, 0]
 
         for t in range(1, self.T):
+            super().step()
+            self.step_signal.emit(f"Steps: {self.current_step}/{self.T * 3 - 2}")
             for l in range(self.L):
                 it = np.nditer(self.cell_types, flags=['multi_index'])
                 while not it.finished:
@@ -95,8 +99,54 @@ class GAlgorithm(Algorithm):
                         continue
                     for a in range(self._n_actions):
                         mask = self.state_trnstn_distr(x, y, a)
-                        self.fas[x - 1:x + 2, y - 1:y + 2, l, t] = self.fas[x - 1:x + 2, y - 1:y + 2, l, t] + mask * \
-                                                                   self.fas[x, y, a, t - 1] / self._n_actions
+                        self.fas[x - 1:x + 2, y - 1:y + 2, l, t] += mask * self.fas[x, y, a, t - 1] / self._n_actions
                     it.iternext()
             self.fas[:, :, :, t] = self.fas[:, :, :, t] / np.sum(self.fas[:, :, :, t])
             self.fs[:, :, t] = np.sum(self.fas[:, :, :, t], 2)
+
+    def backward(self):
+        self.ba[:, self.T - 1] = np.ones(self.L) / self.L
+
+        for a in range(self.L):
+            self.bas[:, :, a, self.T - 1] = self.bs[:, :, self.T - 1] * self.ba[a, self.T - 1]
+        self.bas[:, :, :, self.T - 1] /= np.sum(self.bas[:, :, :, self.T - 1])
+
+        for t in reversed(range(self.T - 1)):
+            super().step()
+            self.step_signal.emit(f"Steps: {self.current_step}/{self.T * 3 - 2}")
+
+            for l in range(self.L):
+                it = np.nditer(self.cell_types, flags=['multi_index'])
+                while not it.finished:
+                    x, y = it.multi_index
+                    if self.cell_types[x, y] == OBSTACLE:
+                        it.iternext()
+                        continue
+
+                    for a in range(self.L):
+                        mask = self.state_trnstn_distr(x, y, a)
+                        self.bas[x, y, l, t] += np.sum(
+                            mask * self.bas[x - 1:x + 2, y - 1:y + 2, l, t + 1]) / self._n_actions
+                    it.iternext()
+
+            self.bas[:, :, :, t] /= np.sum(self.bas[:, :, :, t])
+            self.bs[:, :, t] = np.sum(self.bas[:, :, :, t], 2)
+
+    def posteriori(self):
+        for t in range(self.T):
+            super().step()
+            self.step_signal.emit(f"Steps: {self.current_step}/{self.T * 3 - 2}")
+
+            self.pas[:, :, :, t] = self.fas[:, :, :, t] * self.bas[:, :, :, t]
+            self.pas[:, :, :, t] /= np.sum(self.pas[:, :, :, t])
+            self.ps[:, :, t] = np.sum(self.pas[:, :, :, t], 2)
+
+    def run(self):
+        for_thread = Thread(target=lambda: self.forward())
+        bac_thread = Thread(target=lambda: self.backward())
+        for_thread.start()
+        bac_thread.start()
+        for_thread.join()
+        bac_thread.join()
+        self.posteriori()
+        self.finished.emit()

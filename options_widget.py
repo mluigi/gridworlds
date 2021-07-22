@@ -35,7 +35,7 @@ class OptionsWidget(QWidget):
 
         self.options_layout.addWidget(QLabel("Algorithm type"))
         self.algo_choice = QComboBox()
-        self.algo_choice.addItems(["Policy Evaluation", "Policy Iteration", "Value Iteration"])
+        self.algo_choice.addItems(["Policy Evaluation", "Policy Iteration", "Value Iteration", "G-Algorithm"])
         self.options_layout.addWidget(self.algo_choice)
 
         self.options_layout.addWidget(QLabel("Controls"))
