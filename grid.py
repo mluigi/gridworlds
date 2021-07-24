@@ -33,7 +33,7 @@ class GridWidget(QWidget):
         self.grid_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.grid_layout)
         self.cells = None
-        self.reset()
+        self.draw_grid()
 
     def mousePressEvent(self, mouse_position: QMouseEvent):
         x = mouse_position.x()
@@ -71,8 +71,9 @@ class GridWidget(QWidget):
         else:
             self.setGeometry(0, 0, width, width)
 
-    def reset(self):
-        self.cell_types = np.zeros(self.sizes)
+    def draw_grid(self, reset=True):
+        if reset:
+            self.cell_types = np.zeros(self.sizes)
         while self.grid_layout.count():
             child = self.grid_layout.takeAt(0)
             if child.widget():
@@ -87,3 +88,10 @@ class GridWidget(QWidget):
         for x in range(len(strings)):
             for y in range(len(strings[x])):
                 self.cells[x][y].setText(strings[x][y])
+
+    def set_borders(self):
+        self.cell_types[0, :] = 1
+        self.cell_types[:, 0] = 1
+        self.cell_types[self.sizes[0] - 1, :] = 1
+        self.cell_types[:, self.sizes[0] - 1] = 1
+        self.draw_grid(reset=False)

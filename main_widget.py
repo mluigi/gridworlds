@@ -63,7 +63,7 @@ class MainWidget(QWidget):
 
     def change_grid_size(self, new_size):
         self.grid.sizes = (new_size, new_size)
-        self.grid.reset()
+        self.grid.draw_grid()
         self.agent.sizes = (new_size, new_size)
         self.reset_algo()
 
@@ -84,6 +84,7 @@ class MainWidget(QWidget):
         if isinstance(self.algo, GAlgorithm):
             self.options.run_once_button.setEnabled(False)
             self.algo.finished.connect(self.plot)
+            self.grid.set_borders()
         else:
             self.options.run_once_button.setEnabled(True)
             self.options.run_once_button.pressed.disconnect()
