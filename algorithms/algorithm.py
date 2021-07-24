@@ -32,7 +32,7 @@ class Algorithm(QObject):
         self.V = np.zeros(self._n_states)
 
         # actions
-        self._arrows = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖', ''] if kings_move else ['↑', '→', '↓', '←']
+        self.arrows = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖', ''] if kings_move else ['↑', '→', '↓', '←']
         self.new_indexes = [
             lambda x, y: (np.clip(x - 1, 0, self._size[0] - 1), y),  # Up
             lambda x, y: (x, y) if self.is_out_of_bounds((x - 1, y + 1)) else (x - 1, y + 1),  # Up-Right
@@ -102,3 +102,19 @@ class Algorithm(QObject):
             arrows[x][y] = self.arrows[best_action] if self.cell_types[x, y] in [FREE_CELL, START, 4] else ''
             it.iternext()
         return arrows
+
+    def reset_grid(self, size, cell_types):
+        self.cell_types = cell_types
+        self.states = np.zeros(size)
+        self._size = size
+        it = np.nditer(self.states, flags=['multi_index'])
+        self._n_states = 0
+        while not it.finished:
+            x, y = it.multi_index
+            is_finish_cell = self.cell_types[x, y] == GOAL
+            self._n_states += 0 if is_finish_cell else 1
+            self.states[x, y] = 0 if is_finish_cell else self._n_states
+            it.iternext()
+        self._n_states += 1
+        self.V = np.zeros(self._n_states)
+        self.policy = np.ones((self._n_states, self._n_actions)) / self._n_actions

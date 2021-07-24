@@ -35,6 +35,7 @@ class MainWidget(QWidget):
         self.options.run_button.pressed.connect(self.algo.run)
         self.options.run_button.pressed.connect(lambda: self.toggle_ui(False))
         self.algo.finished.connect(lambda: self.toggle_ui(True))
+        self.grid.changed.connect(self.algo.reset_grid)
         self.reset_algo()
 
         self.options.moves_choice.currentIndexChanged.connect(self.change_moves_type)
@@ -42,7 +43,6 @@ class MainWidget(QWidget):
         self.options.show_choice.currentIndexChanged.connect(self.change_what_to_show)
         grid_layout = QGridLayout()
         self.setLayout(grid_layout)
-        self.grid.changed.connect(self.reset_algo)
         grid_layout.addWidget(self.grid, 0, 0)
         grid_layout.addWidget(self.options, 0, 1)
 
@@ -65,7 +65,11 @@ class MainWidget(QWidget):
         self.grid.sizes = (new_size, new_size)
         self.grid.draw_grid()
         self.agent.sizes = (new_size, new_size)
-        self.reset_algo()
+        if isinstance(self.algo, GAlgorithm):
+            self.grid.set_borders()
+            self.algo.reset_grid(self.grid.sizes, self.grid.cell_types)
+        else:
+            self.reset_algo()
 
     def reset_thread(self):
         self.thread.quit()
@@ -83,7 +87,7 @@ class MainWidget(QWidget):
         self.algo.write_signal.connect(self.grid.write_on_cells)
         if isinstance(self.algo, GAlgorithm):
             self.options.run_once_button.setEnabled(False)
-            self.algo.finished.connect(self.plot)
+            self.algo.plot_signal.connect(self.plot)
             self.grid.set_borders()
         else:
             self.options.run_once_button.setEnabled(True)
@@ -93,7 +97,8 @@ class MainWidget(QWidget):
         self.options.run_button.pressed.connect(self.algo.run)
         self.options.run_button.pressed.connect(lambda: self.toggle_ui(False))
         self.algo.finished.connect(lambda: self.toggle_ui(True))
-
+        self.grid.changed.disconnect()
+        self.grid.changed.connect(self.algo.reset_grid)
         self.agent.change_cell_types(self.grid.cell_types)
         self.thread.start()
 
@@ -106,22 +111,9 @@ class MainWidget(QWidget):
         self.options.size_slider.setEnabled(enable)
         self.grid.setEnabled(enable)
 
-    def plot(self):
-        thread1 = QThread(parent=self)
-        fs = PlotWindow("Forward", self.algo.fs, self.algo.T)
-        fs.moveToThread(thread1)
-        thread1.started.connect(lambda: fs.show())
-
-        thread2 = QThread(parent=self)
-        bs = PlotWindow("Backward", self.algo.bs, self.algo.T)
-        bs.moveToThread(thread2)
-        thread2.started.connect(lambda: bs.show())
-
-        thread3 = QThread(parent=self)
-        ps = PlotWindow("Posterior", self.algo.ps, self.algo.T)
-        ps.moveToThread(thread3)
-        thread3.started.connect(lambda: ps.show())
-
-        thread1.start()
-        thread2.start()
-        thread3.start()
+    def plot(self, title, array, T):
+        thread = QThread(parent=self)
+        plot = PlotWindow(title, array, T)
+        plot.moveToThread(thread)
+        thread.started.connect(lambda: plot.show())
+        thread.start()

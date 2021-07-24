@@ -42,7 +42,7 @@ class OptionsWidget(QWidget):
         self.run_button = QPushButton("Run")
         self.run_once_button = QPushButton("Run one step")
         self.stop_button = QPushButton("Stop")
-        # self.stop_button.setEnabled(False)
+        self.stop_button.setEnabled(False)
         controls_layout = QHBoxLayout()
         controls_layout.addWidget(self.run_button)
         controls_layout.addWidget(self.run_once_button)

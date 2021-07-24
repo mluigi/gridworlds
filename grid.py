@@ -21,7 +21,7 @@ class GridWidget(QWidget):
         4: ('Red', 'white'),  # Multi agent test
         5: ('Yellow', 'black')  # Current Position
     }
-    changed = QtCore.pyqtSignal()
+    changed = QtCore.pyqtSignal(tuple, np.ndarray)
 
     def __init__(self, size: (None, None)):
         super().__init__()
@@ -42,7 +42,7 @@ class GridWidget(QWidget):
         y = math.floor(y / (self.size().height() / self.sizes[1]))
         self.cell_types[y, x] = (self.cell_types[y, x] + 1) % 5
         self.update_cell(x, y)
-        self.changed.emit()
+        self.changed.emit(self.sizes, self.cell_types)
 
     def get_cell(self, x, y):
         cell = QLabel()
