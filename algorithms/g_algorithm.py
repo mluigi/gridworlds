@@ -97,10 +97,10 @@ class GAlgorithm(Algorithm):
             for l in range(self.L):
                 for x in range(1, self._size[0] - 1):
                     for y in range(1, self._size[0] - 1):
-                        mask = self.state_trnstn_distr(x, y, l)
                         for a in range(self._n_actions):
-                            self.fas[x - 1:x + 2, y - 1:y + 2, l, t] += mask * self.fas[
-                                x, y, a, t - 1] / self._n_actions
+                            mask = self.state_trnstn_distr(x, y, a)
+                            self.fas[x - 1:x + 2, y - 1:y + 2, l, t] += mask * (self.fas[
+                                                                                    x, y, a, t - 1] / self._n_actions)
             self.fas[:, :, :, t] /= np.sum(self.fas[:, :, :, t])
             self.fs[:, :, t] = np.sum(self.fas[:, :, :, t], 2)
         self.plot_signal.emit("Forward", self.fs, self.T)
@@ -119,14 +119,13 @@ class GAlgorithm(Algorithm):
             for l in range(self.L):
                 for x in range(1, self._size[0] - 1):
                     for y in range(1, self._size[0] - 1):
-                        skip = 0
+                        skip = 1
                         if self.cell_types[x, y] == OBSTACLE:
-                            skip = 1
-
+                            skip = 0
                         mask = self.state_trnstn_distr(x, y, l)
                         for a in range(self.L):
-                            self.bas[x, y, l, t] = (1 - skip) * self.bas[x, y, l, t] + np.sum(
-                                mask * self.bas[x - 1:x + 2, y - 1:y + 2, l, t + 1]) / self._n_actions
+                            self.bas[x, y, l, t] = skip * (self.bas[x, y, l, t] + np.sum(
+                                mask * self.bas[x - 1:x + 2, y - 1:y + 2, a, t + 1]) / self._n_actions)
 
             self.bas[:, :, :, t] /= np.sum(self.bas[:, :, :, t])
             self.bs[:, :, t] = np.sum(self.bas[:, :, :, t], 2)
@@ -143,9 +142,11 @@ class GAlgorithm(Algorithm):
 
     def find_best_path(self):
         k = self.fas[:, :, :, 0] * self.bas[:, :, :, 0]
+        path = np.zeros((self._size[0], self._size[0], 1))
         idmax = np.argwhere(k == np.max(k)).transpose()
         newfas = np.zeros((self._size[0], self._size[0], self.L))
         newfas[idmax[0], idmax[1], idmax[2]] = 1
+        path[idmax[0], idmax[1], 0] += 1
         self.fas = np.zeros((self._size[0], self._size[0], self.L, self.T))
         for t in range(1, self.T):
             super().step()
@@ -155,15 +156,18 @@ class GAlgorithm(Algorithm):
                     for y in range(1, self._size[0] - 1):
                         mask = self.state_trnstn_distr(x, y, l)
                         for a in range(self._n_actions):
-                            self.fas[x - 1:x + 2, y - 1:y + 2, a, t] += (mask * newfas[x, y, l] / self._n_actions)
+                            self.fas[x - 1:x + 2, y - 1:y + 2, a, t] += mask * newfas[x, y, l] / self._n_actions
 
             k = self.fas[:, :, :, t] * self.bas[:, :, :, 0]
             idmax = np.argwhere(k == np.max(k)).transpose()
-            print(idmax.transpose())
             newfas = np.zeros((self._size[0], self._size[0], self.L))
             newfas[idmax[0], idmax[1], idmax[2]] = 1
+            path[idmax[0], idmax[1], 0] += 1
+        self.plot_signal.emit("Best Path", path, 1)
 
     def run(self):
+        # self.forward()
+        # self.backward()
         for_thread = Thread(target=lambda: self.forward())
         bac_thread = Thread(target=lambda: self.backward())
         for_thread.start()
@@ -172,11 +176,12 @@ class GAlgorithm(Algorithm):
         bac_thread.join()
         self.posteriori()
         self.find_best_path()
+
         self.finished.emit()
 
     def reset_grid(self, size, cell_types):
         super(GAlgorithm, self).reset_grid(size, cell_types)
-
+        self.current_step = 0
         start = np.copy(cell_types)
         start = np.where(start != START, 0, start)
         start = np.where(start == START, 1, start)
