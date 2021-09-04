@@ -117,15 +117,28 @@ class GAlgorithm(Algorithm):
             self.step_signal.emit(f"Steps: {self.current_step}/{self.total_steps}")
 
             for l in range(self.L):
-                for x in range(1, self._size[0] - 1):
-                    for y in range(1, self._size[0] - 1):
-                        skip = 1
-                        if self.cell_types[x, y] == OBSTACLE:
-                            skip = 0
-                        mask = self.state_trnstn_distr(x, y, l)
-                        for a in range(self.L):
-                            self.bas[x, y, l, t] = skip * (self.bas[x, y, l, t] + np.sum(
-                                mask * self.bas[x - 1:x + 2, y - 1:y + 2, a, t + 1]) / self._n_actions)
+                indexes = np.transpose(np.sum(self.bas[:, :, :, t + 1], axis=2).nonzero())
+                new_indexes = list(totuple(indexes))
+                for index in indexes:
+                    x = index[0]
+                    y = index[1]
+                    for a in range(9):
+                        new_index = self.new_indexes[a](x, y)
+                        new_indexes.append(new_index)
+
+                new_indexes = list(dict.fromkeys(new_indexes))
+                for index in new_indexes:
+                    x = index[0]
+                    y = index[1]
+                    if x == 0 or x == self._size[0] - 1 or y == 0 or y == self._size[1] - 1:
+                        continue
+                    skip = 1
+                    if self.cell_types[x, y] == OBSTACLE:
+                        skip = 0
+                    mask = self.state_trnstn_distr(x, y, l)
+                    for a in range(self.L):
+                        self.bas[x, y, l, t] = skip * (self.bas[x, y, l, t] + np.sum(
+                            mask * self.bas[x - 1:x + 2, y - 1:y + 2, a, t + 1]) / self._n_actions)
 
             self.bas[:, :, :, t] /= np.sum(self.bas[:, :, :, t])
             self.bs[:, :, t] = np.sum(self.bas[:, :, :, t], 2)
@@ -146,7 +159,7 @@ class GAlgorithm(Algorithm):
         idmax = np.argwhere(k == np.max(k)).transpose()
         newfas = np.zeros((self._size[0], self._size[0], self.L))
         newfas[idmax[0], idmax[1], idmax[2]] = 1
-        path[idmax[0], idmax[1], 0] += 1
+        path[idmax[0], idmax[1], 0] = 1
         self.fas = np.zeros((self._size[0], self._size[0], self.L, self.T))
         for t in range(1, self.T):
             super().step()
@@ -162,12 +175,12 @@ class GAlgorithm(Algorithm):
             idmax = np.argwhere(k == np.max(k)).transpose()
             newfas = np.zeros((self._size[0], self._size[0], self.L))
             newfas[idmax[0], idmax[1], idmax[2]] = 1
-            path[idmax[0], idmax[1], 0] += 1
+            path[idmax[0], idmax[1], 0] = 1
         self.plot_signal.emit("Best Path", path, 1)
 
     def run(self):
-        # self.forward()
         # self.backward()
+        # self.forward()
         for_thread = Thread(target=lambda: self.forward())
         bac_thread = Thread(target=lambda: self.backward())
         for_thread.start()
@@ -199,3 +212,10 @@ class GAlgorithm(Algorithm):
 
         self.fs[:, :, 0] = start
         self.bs[:, :, self.T - 1] = goal
+
+
+def totuple(a):
+    try:
+        return tuple(totuple(i) for i in a)
+    except TypeError:
+        return a
