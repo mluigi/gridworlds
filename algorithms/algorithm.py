@@ -88,7 +88,6 @@ class Algorithm(QObject):
             x, y = it.multi_index
             values[x][y] = "{:.2f}".format(self.V[int(self.states[x, y])])
             it.iternext()
-
         return values
 
     def policy_to_arrows(self):
